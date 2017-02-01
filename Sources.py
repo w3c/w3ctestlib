@@ -29,7 +29,7 @@ class SourceTree(object):
     self.mTestExtensions = ['.xht', '.html', '.xhtml', '.htm', '.xml', '.svg']
     self.mReferenceExtensions = ['.xht', '.html', '.xhtml', '.htm', '.xml', '.png', '.svg']
     self.mRepository = repository
-  
+
   def _splitDirs(self, dir):
     if ('' == dir):
       pathList = []
@@ -38,22 +38,22 @@ class SourceTree(object):
     else:
       pathList = dir.split(os.path.sep)
     return pathList
-  
+
   def _splitPath(self, filePath):
     """split a path into a list of directory names and the file name
-       paths may come form the os or mercurial, which always uses '/' as the 
+       paths may come form the os or mercurial, which always uses '/' as the
        directory separator
     """
     dir, fileName = os.path.split(filePath.lower())
     return (self._splitDirs(dir), fileName)
-      
+
   def isTracked(self, filePath):
     pathList, fileName = self._splitPath(filePath)
     return (not self._isIgnored(pathList, fileName))
-      
+
   def _isApprovedPath(self, pathList):
     return ((1 < len(pathList)) and ('approved' == pathList[0]) and (('support' == pathList[1]) or ('src' in pathList)))
-      
+
   def isApprovedPath(self, filePath):
     pathList, fileName = self._splitPath(filePath)
     return (not self._isIgnored(pathList, fileName)) and self._isApprovedPath(pathList)
@@ -74,60 +74,60 @@ class SourceTree(object):
               fileName.startswith('.hg') or fileName.startswith('.git') or
               ('sections.dat' == fileName) or ('get-spec-sections.pl' == fileName))
     return True
-      
+
   def isIgnored(self, filePath):
     pathList, fileName = self._splitPath(filePath)
     return self._isIgnored(pathList, fileName)
-  
+
   def isIgnoredDir(self, dir):
     pathList = self._splitDirs(dir)
     return self._isIgnoredPath(pathList)
-  
+
   def _isToolPath(self, pathList):
     return ('tools' in pathList)
-  
+
   def _isTool(self, pathList, fileName):
     return self._isToolPath(pathList)
-  
+
   def isTool(self, filePath):
     pathList, fileName = self._splitPath(filePath)
     return (not self._isIgnored(pathList, fileName)) and self._isTool(pathList, fileName)
 
   def _isSupportPath(self, pathList):
     return ('support' in pathList)
-      
+
   def _isSupport(self, pathList, fileName):
-    return (self._isSupportPath(pathList) or 
+    return (self._isSupportPath(pathList) or
             ((not self._isTool(pathList, fileName)) and
              (not self._isReference(pathList, fileName)) and
              (not self._isTestCase(pathList, fileName))))
-      
+
   def isSupport(self, filePath):
     pathList, fileName = self._splitPath(filePath)
     return (not self._isIgnored(pathList, fileName)) and self._isSupport(pathList, fileName)
-      
+
   def _isReferencePath(self, pathList):
     return (('reftest' in pathList) or ('reference' in pathList))
-      
+
   def _isReference(self, pathList, fileName):
     if ((not self._isSupportPath(pathList)) and (not self._isToolPath(pathList))):
       baseName, fileExt = os.path.splitext(fileName)[:2]
-      if (bool(re.search('(^ref-|^notref-).+', baseName)) or 
-          bool(re.search('.+(-ref[0-9]*$|-notref[0-9]*$)', baseName)) or 
+      if (bool(re.search('(^ref-|^notref-).+', baseName)) or
+          bool(re.search('.+(-ref[0-9]*$|-notref[0-9]*$)', baseName)) or
           ('-ref-' in baseName) or ('-notref-' in baseName)):
         return (fileExt in self.mReferenceExtensions)
       if (self._isReferencePath(pathList)):
         return (fileExt in self.mReferenceExtensions)
-    return False    
-      
+    return False
+
   def isReference(self, filePath):
     pathList, fileName = self._splitPath(filePath)
     return (not self._isIgnored(pathList, fileName)) and self._isReference(pathList, fileName)
-  
+
   def isReferenceAnywhere(self, filePath):
     pathList, fileName = self._splitPath(filePath)
     return self._isReference(pathList, fileName)
-  
+
   def _isTestCase(self, pathList, fileName):
     if ((not self._isToolPath(pathList)) and (not self._isSupportPath(pathList)) and (not self._isReference(pathList, fileName))):
       fileExt = os.path.splitext(fileName)[1]
@@ -137,7 +137,7 @@ class SourceTree(object):
   def isTestCase(self, filePath):
     pathList, fileName = self._splitPath(filePath)
     return (not self._isIgnored(pathList, fileName)) and self._isTestCase(pathList, fileName)
-      
+
   def getAssetName(self, filePath):
     pathList, fileName = self._splitPath(filePath)
     if (self._isReference(pathList, fileName) or self._isTestCase(pathList, fileName)):
@@ -153,7 +153,7 @@ class SourceTree(object):
     if (self._isTool(pathList, fileName)):
       return intern('tool')
     return intern('support')
-  
+
 
 class SourceCache:
   """Cache for FileSource objects. Supports one FileSource object
@@ -169,7 +169,7 @@ class SourceCache:
        Uses a cache to avoid creating more than one of the same object:
        does not support creating two FileSources with the same sourcepath;
        asserts if this is tried. (.htaccess files are not cached.)
-       
+
        Cache is bypassed if loading form a change context
     """
     if ((None == data) and self.__cache.has_key(sourcepath)):
@@ -204,10 +204,10 @@ class SourceSet:
 
   def __len__(self):
     return len(self.pathMap)
-    
+
   def _keyOf(self, source):
-    return source.type() + '/' + source.name()
-    
+    return source.type() + '/' + source.keyName()
+
   def __contains__(self, source):
     return self._keyOf(source) in self.pathMap
 
@@ -272,7 +272,7 @@ class SourceSet:
   def adjustContentPaths(self, format):
     for source in self.pathMap.itervalues():
       source.adjustContentPaths(format)
-  
+
   def write(self, format):
     """Write files out through OutputFormat `format`.
     """
@@ -286,7 +286,7 @@ class StringReader(object):
   def __init__(self, string):
     self.mString = string
     self.mIndex = 0
-  
+
   def read(self, maxSize = None):
     if (self.mIndex < len(self.mString)):
       if (maxSize and (0 < maxSize)):
@@ -319,10 +319,10 @@ class NamedDict(object):
 
     def __len__(self):
         return len(self.__slots__)
-    
+
     def __iter__(self):
         return iter(self.__slots__)
-    
+
     def __contains__(self, key):
         return (key in self.__slots__)
 
@@ -331,7 +331,7 @@ class NamedDict(object):
         for key in self.__slots__:
             clone[key] = self[key]
         return clone
-    
+
     def keys(self):
         return self.__slots__
 
@@ -395,7 +395,7 @@ class Metadata(NamedDict):
         if ('scripttest' == key):
             return self.scripttest
         return None
-    
+
     def __setitem__(self, key, value):
         if ('name' == key):
             self.name = value
@@ -425,7 +425,7 @@ class Metadata(NamedDict):
 
 class ReferenceData(NamedDict):
     __slots__ = ('name', 'type', 'relpath', 'repopath')
-    
+
     def __init__(self, name = None, type = None, relpath = None, repopath = None):
         self.name = name
         self.type = type
@@ -479,7 +479,7 @@ class FileSource:
        `mimetype` should be the canonical MIME type for the file, if known.
         If `mimetype` is None, guess type from file extension, defaulting to
         the None key's value in extensionMap.
-        
+
        `data` if provided, is a the contents of the file. Otherwise the file is read
         from disk.
     """
@@ -510,12 +510,17 @@ class FileSource:
   def name(self):
     return self.sourceTree.getAssetName(self.sourcepath)
 
+  def keyName(self):
+    if ('support' == self.type()):
+      return os.path.relpath(self.relpath, 'support')
+    return self.name()
+
   def type(self):
     return self.sourceTree.getAssetType(self.sourcepath)
 
   def relativeURL(self, other):
     return relativeURL(self.relpath, other.relpath)
-    
+
   def data(self):
     """Return file contents as a byte string."""
     if (self._data is None):
@@ -523,13 +528,13 @@ class FileSource:
     if (self._data.startswith(codecs.BOM_UTF8)):
       self.encoding = 'utf-8-sig' # XXX look for other unicode BOMs
     return self._data
-    
+
   def unicode(self):
     try:
       return self.data().decode(self.encoding)
     except UnicodeDecodeError, e:
       return None
-    
+
   def parse(self):
     """Parses and validates FileSource data from sourcepath."""
     self.loadMetadata()
@@ -570,7 +575,7 @@ class FileSource:
             scriptNode = self.scripts[src]
             scriptNode.set('src', '/resources/testharnessreport.js')
 
-    
+
   def write(self, format):
     """Writes FileSource.data() out to `self.relpath` through Format `format`."""
     data = self.data()
@@ -604,12 +609,12 @@ class FileSource:
     """Look for .meta file and load any metadata from it if present
     """
     pass
-    
+
   def augmentMetadata(self, next=None, prev=None, reference=None, notReference=None):
     if (self.metaSource):
       return self.metaSource.augmentMetadata(next, prev, reference, notReference)
     return None
-    
+
   # See http://wiki.csswg.org/test/css2.1/format for more info on metadata
   def getMetadata(self, asUnicode = False):
     """Return dictionary of test metadata. Stores list of errors
@@ -628,7 +633,7 @@ class FileSource:
          - scripttest [bool]
        Strings are given in ascii unless asUnicode==True.
     """
-    
+
     self.validate()
 
     def encode(str):
@@ -702,7 +707,7 @@ class FileSource:
             else:
                 refGroups.append(notRefs.values())
         return refGroups
-  
+
     references = listReferences(self, set([self.sourcepath])) if (self.refs) else None
 
     if (self.metadata):
@@ -746,15 +751,15 @@ class FileSource:
   def getReferencePaths(self):
     """Get list of paths to references as tuple(path, relPath, refType)."""
     self.validate()
-    return [(os.path.join(os.path.dirname(self.sourcepath), ref[1]), 
+    return [(os.path.join(os.path.dirname(self.sourcepath), ref[1]),
              os.path.join(os.path.dirname(self.relpath), ref[1]),
-             ref[0]) 
+             ref[0])
             for ref in self.refs.values()]
-    
+
   def isTest(self):
     self.validate()
     return bool(self.metadata) and bool(self.metadata.get('links'))
-    
+
   def isReftest(self):
     return self.isTest() and bool(self.refs)
 
@@ -775,7 +780,7 @@ class FileSource:
     return False
 
 
-    
+
 class ConfigSource(FileSource):
   """Object representing a text-based configuration file.
      Capable of merging multiple config-file contents.
@@ -804,7 +809,7 @@ class ConfigSource(FileSource):
 
   def name(self):
     return '.htaccess'
-    
+
   def type(self):
     return intern('support')
 
@@ -815,7 +820,7 @@ class ConfigSource(FileSource):
       data += open(src).read()
       data += '\n'
     return data
-    
+
   def getMetadata(self, asUnicode = False):
     return None
 
@@ -939,7 +944,7 @@ class XMLSource(FileSource):
   def cacheAsParseError(self, filename, e):
       """Replace document with an error message."""
       errorDoc = self.syntaxErrorDoc % (filename, e)
-      from StringIO import StringIO 
+      from StringIO import StringIO
       self.tree = etree.parse(StringIO(errorDoc), parser=self.__parser)
 
   def parse(self):
@@ -965,7 +970,7 @@ class XMLSource(FileSource):
       e.W3CTestLibErrorLocation = self.sourcepath
       self.errors = [str(e)]
       self.encoding = 'utf-8'
-      
+
   def validate(self):
     """Parse file if not parsed, and store any parse errors in self.errors"""
     if self.tree is None:
@@ -973,9 +978,9 @@ class XMLSource(FileSource):
 
   def getMeatdataContainer(self):
     return self.tree.getroot().find(xhtmlns+'head')
-    
+
   def injectMetadataLink(self, rel, href, tagCode = None):
-    """Inject (prepend) <link> with data given inside metadata container. 
+    """Inject (prepend) <link> with data given inside metadata container.
        Injected element is tagged with `tagCode`, which can be
        used to clear it with clearInjectedTags later.
     """
@@ -1006,12 +1011,12 @@ class XMLSource(FileSource):
     if ((not self.tree) or (self.metaSource)):
       return FileSource.data(self)
     return self.serializeXML().encode(self.encoding, 'xmlcharrefreplace')
-    
+
   def unicode(self):
     if ((not self.tree) or (self.metaSource)):
       return FileSource.unicode(self)
     return self.serializeXML()
-    
+
   def write(self, format, output=None):
     """Write Source through OutputFormat `format`.
        Write contents as string `output` instead if specified.
@@ -1199,7 +1204,7 @@ class XHTMLSource(XMLSource):
 
 class SVGSource(XMLSource):
   """FileSource object with support for extracting metadata from SVG."""
-  
+
   def __init__(self, sourceTree, sourcepath, relpath, data = None):
     """Initialize SVGSource by loading from SVG file `sourcepath`.
       Parse errors are stored in `self.errors`,
@@ -1342,7 +1347,7 @@ class HTMLSource(XMLSource):
 
   # Private Data and Methods
   __parser = html5lib.HTMLParser(tree = treebuilders.getTreeBuilder('lxml'))
- 
+
   # Public Methods
 
   def __init__(self, sourceTree, sourcepath, relpath, data = None):
@@ -1398,14 +1403,14 @@ class HTMLSource(XMLSource):
             if ('foreignobject' != qName.localname.lower()):
                 injected |= self._injectXLinks(child, nodeList)
     return injected
-    
-    
+
+
   def _findElements(self, namespace, elementName):
       elements = self.tree.findall('.//{' + namespace + '}' + elementName)
       if (self.tree.getroot().tag == '{' + namespace + '}' + elementName):
           elements.insert(0, self.tree.getroot())
       return elements
-      
+
   def _injectNamespace(self, elementName, prefix, namespace, doXLinks, nodeList):
     attr = xmlns + prefix if (prefix) else 'xmlns'
     elements = self._findElements(namespace, elementName)
@@ -1417,14 +1422,14 @@ class HTMLSource(XMLSource):
           if (self._injectXLinks(element, nodeList)):
             element.set(xmlns + 'xlink', 'http://www.w3.org/1999/xlink')
             nodeList.append((element, xmlns + 'xlink', None))
-    
+
   def injectNamespaces(self):
     nodeList = []
     self._injectNamespace('html', None, 'http://www.w3.org/1999/xhtml', False, nodeList)
     self._injectNamespace('svg', None, 'http://www.w3.org/2000/svg', True, nodeList)
     self._injectNamespace('math', None, 'http://www.w3.org/1998/Math/MathML', True, nodeList)
     return nodeList
-    
+
   def removeNamespaces(self, nodeList):
       if nodeList:
           for element, attr, oldAttr in nodeList:
@@ -1434,7 +1439,7 @@ class HTMLSource(XMLSource):
                   element.set(oldAttr, value)
               else:
                   del element.attrib[attr]
-    
+
   def serializeXHTML(self, doctype = None):
     self.validate()
     # Serialize
@@ -1459,9 +1464,9 @@ class HTMLSource(XMLSource):
     if ((not self.tree) or (self.metaSource)):
       return FileSource.data(self)
     return self.serializeHTML().encode(self.encoding, 'xmlcharrefreplace')
-    
+
   def unicode(self):
     if ((not self.tree) or (self.metaSource)):
       return FileSource.unicode(self)
     return self.serializeHTML()
-    
+
