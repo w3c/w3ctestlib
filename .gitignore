@@ -1,0 +1,7 @@
+*.xcodeproj
+*.sublime-workspace
+**/.DS_Store
+**/.directory
+.hg*
+**/*.pyc
+
